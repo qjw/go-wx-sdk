@@ -1,10 +1,10 @@
 package corp
 
 import (
-	"github.com/qjw/go-wx-sdk/utils"
 	"errors"
-	"strings"
+	"github.com/qjw/go-wx-sdk/utils"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -43,19 +43,27 @@ type NewsMsgObj struct {
 	} `json:"articles"`
 }
 
+type TextCardObj struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Url         string `json:"url"`
+	Btntxt      string `json:"btntxt"`
+}
+
 type MsgObj struct {
-	ToUser  string       `json:"touser,omitempty" doc:"成员ID列表（消息接收者，多个接收者用‘|’分隔，最多支持1000个）。特殊情况：指定为@all，则向关注该企业应用的全部成员发送"`
-	ToParty string       `json:"toparty,omitempty" doc:"部门ID列表，多个接收者用‘|’分隔，最多支持100个。当touser为@all时忽略本参数"`
-	ToTag   string       `json:"totag,omitempty" doc:"标签ID列表，多个接收者用‘|’分隔，最多支持100个。当touser为@all时忽略本参数"`
-	MsgType string       `json:"msgtype"`
-	AgentID int64        `json:"agentid"`
-	Safe    string       `json:"safe,omitempty" doc:"表示是否是保密消息，0表示否，1表示是，默认0"`
-	Text    *textMsgObj  `json:"text,omitempty"`
-	Image   *imageMsgObj `json:"image,omitempty"`
-	Voice   *voiceMsgObj `json:"voice,omitempty"`
-	File    *fileMsgObj  `json:"file,omitempty"`
-	Video   *videoMsgObj `json:"video,omitempty"`
-	News    *NewsMsgObj  `json:"news,omitempty"`
+	ToUser   string       `json:"touser,omitempty" doc:"成员ID列表（消息接收者，多个接收者用‘|’分隔，最多支持1000个）。特殊情况：指定为@all，则向关注该企业应用的全部成员发送"`
+	ToParty  string       `json:"toparty,omitempty" doc:"部门ID列表，多个接收者用‘|’分隔，最多支持100个。当touser为@all时忽略本参数"`
+	ToTag    string       `json:"totag,omitempty" doc:"标签ID列表，多个接收者用‘|’分隔，最多支持100个。当touser为@all时忽略本参数"`
+	MsgType  string       `json:"msgtype"`
+	AgentID  int64        `json:"agentid"`
+	Safe     string       `json:"safe,omitempty" doc:"表示是否是保密消息，0表示否，1表示是，默认0"`
+	Text     *textMsgObj  `json:"text,omitempty"`
+	Image    *imageMsgObj `json:"image,omitempty"`
+	Voice    *voiceMsgObj `json:"voice,omitempty"`
+	File     *fileMsgObj  `json:"file,omitempty"`
+	Video    *videoMsgObj `json:"video,omitempty"`
+	TextCard *TextCardObj `json:"textcard,omitempty"`
+	News     *NewsMsgObj  `json:"news,omitempty"`
 }
 
 // 用 '|' 连接 a 的各个元素的十进制字符串
@@ -94,6 +102,15 @@ func (this CorpApi) sendMsgImp(touser []string, toparty, totag []int64, msg *Msg
 	} else {
 		return nil, err
 	}
+}
+
+func (this CorpApi) SendTextCardMsg(touser []string, toparty, totag []int64, agentid int64,
+	card *TextCardObj) (*utils.CommonError, error) {
+	return this.sendMsgImp(touser, toparty, totag, &MsgObj{
+		MsgType: "textcard",
+		AgentID: agentid,
+		TextCard: card,
+	})
 }
 
 func (this CorpApi) SendTextMsg(touser []string, toparty, totag []int64, agentid int64,
@@ -153,12 +170,11 @@ func (this CorpApi) SendVideoMsg(touser []string, toparty, totag []int64, agenti
 	})
 }
 
-
 func (this CorpApi) SendNewsMsg(touser []string, toparty, totag []int64, agentid int64,
 	news *NewsMsgObj) (*utils.CommonError, error) {
 	return this.sendMsgImp(touser, toparty, totag, &MsgObj{
 		MsgType: "news",
 		AgentID: agentid,
-		News: news,
+		News:    news,
 	})
 }
