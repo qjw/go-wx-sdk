@@ -1,6 +1,7 @@
 package corp
 
 import (
+	"fmt"
 	"github.com/qjw/go-wx-sdk/utils"
 	"net/url"
 	"strconv"
@@ -10,6 +11,8 @@ const (
 	oauth2_authorize     = "https://open.weixin.qq.com/connect/oauth2/authorize"
 	oauth2_getuserinfo   = "https://qyapi.weixin.qq.com/cgi-bin/user/getuserinfo?access_token=%s&code=%s"
 	oauth2_getuserdetail = "https://qyapi.weixin.qq.com/cgi-bin/user/getuserdetail?access_token=%s"
+	qrConnect            = "https://open.work.weixin.qq.com/wwopen/sso/qrConnect"
+	qrConnecxt_3rd       = "https://open.work.weixin.qq.com/wwopen/sso/3rd_qrConnect"
 )
 
 func (this CorpApi) authorizeUrl(redirectURI, scope, state string, agentID *int64) string {
@@ -21,6 +24,15 @@ func (this CorpApi) authorizeUrl(redirectURI, scope, state string, agentID *int6
 		url = url + "&agentid=" + strconv.FormatInt(*agentID, 10)
 	}
 	return url + "#wechat_redirect"
+}
+
+func (this CorpApi) QrConnectUrl(redirectURI, state, appid, agentID string) string {
+	return fmt.Sprintf("%s?appid=%s&agentid=%s&redirect_uri=%s&state=%s",
+		qrConnect,
+		appid,
+		agentID,
+		url.QueryEscape(redirectURI),
+		state)
 }
 
 func (this CorpApi) AuthorizeUserinfo(redirectURI, state string, agentID int64) string {
@@ -50,7 +62,9 @@ type OauthUserDetail struct {
 func (this CorpApi) Oauth2GetUserDetail(user_ticket string) (*OauthUserDetail, error) {
 	var res OauthUserDetail
 	if err := this.DoPostObject(oauth2_getuserdetail,
-		&struct{UserTicket string `json:"user_ticket"`}{UserTicket:user_ticket}, &res); err == nil {
+		&struct {
+			UserTicket string `json:"user_ticket"`
+		}{UserTicket: user_ticket}, &res); err == nil {
 		return &res, nil
 	} else {
 		return nil, err

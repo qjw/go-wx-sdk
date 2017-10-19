@@ -6,6 +6,10 @@ type CommonError struct {
 	ErrMsg  string `json:"errmsg,omitempty"`
 }
 
+func (this CommonError) IsOK() bool {
+	return this.ErrCode == 0
+}
+
 type Pagination struct {
 	Offset int `json:"offset"`
 	Count int `json:"count"`
