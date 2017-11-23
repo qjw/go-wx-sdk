@@ -210,6 +210,13 @@ func NewImage(media_id string) *ImageMessage {
 	return msg
 }
 
+//NewText 初始化转发消息
+func NewTransfer() *CommonToken {
+	msg := &CommonToken{}
+	msg.MsgType = "transfer_customer_service"
+	return msg
+}
+
 //ResAccessToken struct
 type ResAccessToken struct {
 	CommonError

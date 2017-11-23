@@ -2,10 +2,9 @@ package corp
 
 import (
 	"github.com/qjw/go-wx-sdk/utils"
-	"encoding/json"
+	"log"
 	"encoding/xml"
 	"fmt"
-	"log"
 	"net/http"
 	"runtime/debug"
 	"strconv"
@@ -180,9 +179,6 @@ func (srv *Server) getMessage(svrReq *ServerRequest) error {
 	}
 	svrReq.MixedMsg = &mixedMsg
 
-	js, _ := json.MarshalIndent(mixedMsg, "", " ")
-	log.Print(string(js))
-
 	// 安全考虑再次验证
 	if svrReq.RequestHttpBody.ToUserName != mixedMsg.ToUserName {
 		err := fmt.Errorf("the RequestHttpBody's ToUserName(==%s) mismatch the MixedMessage's SuiteId",
@@ -250,7 +246,6 @@ func (srv *Server) send(svrReq *ServerRequest) (err error) {
 	}
 
 	data, _ := xml.MarshalIndent(replyMsg, "", "\t")
-	log.Print(string(data))
 
 	srv.Responce.Header().Set("Content-Type", "application/xml; charset=utf-8")
 	srv.Responce.WriteHeader(http.StatusOK)

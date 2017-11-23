@@ -2,7 +2,6 @@ package utils
 
 import (
 	"fmt"
-	"log"
 	"io"
 	"encoding/json"
 	"errors"
@@ -74,6 +73,13 @@ func (this ApiTokenBase) DoGet(uri_pattern string, res interface{}, a ...interfa
 	return this.doProcessResponse(response,code,err,res)
 }
 
+func (this ApiTokenBase) DoGetLite(uri_pattern string, res interface{}, a ...interface{}) error {
+	var uri string
+	uri = fmt.Sprintf(uri_pattern, a...)
+	response, code, err := HTTPGet(uri)
+	return this.doProcessResponse(response,code,err,res)
+}
+
 func (this ApiTokenBase) DoPostFile(reader io.Reader, fieldname, filename string, res interface{},
 	uri_pattern string, a ...interface{}) error {
 	accessToken, err := this.ContextToken.GetAccessToken()
@@ -139,9 +145,6 @@ func (this ApiTokenBase) doProcessResponse(response []byte, code int,  err error
 	if err != nil {
 		return err
 	}
-
-	tmp := string(response)
-	log.Print(tmp)
 
 	if code == http.StatusNoContent && len(response) == 0{
 		response = []byte("{}")

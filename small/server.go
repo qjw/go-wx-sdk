@@ -1,10 +1,10 @@
-package mp
+package small
 
 import (
-	"github.com/qjw/go-wx-sdk/utils"
 	"encoding/xml"
 	"fmt"
 	"log"
+	"github.com/qjw/go-wx-sdk/utils"
 	"io/ioutil"
 	"net/http"
 	"runtime/debug"
@@ -14,9 +14,9 @@ import (
 type MessageHandle func(*MixMessage) utils.Reply
 
 type Server struct {
-	Request     *http.Request
-	Responce    http.ResponseWriter
-	MpContext *Context
+	Request  *http.Request
+	Responce http.ResponseWriter
+	SContext *Context
 
 	// 公众号的OpenID
 	// openID string
@@ -25,9 +25,8 @@ type Server struct {
 	MessageHandler MessageHandle
 }
 
-
 type ServerRequest struct {
-	MixedMsg        *MixMessage
+	MixedMsg *MixMessage
 	// 加密模式下才有
 	RequestHttpBody *utils.RequestEncryptedXMLMsg
 	// 收到的原始数据
@@ -35,12 +34,12 @@ type ServerRequest struct {
 
 	// 安全（加密）模式
 	IsSafeMode bool
-	Random    []byte
-	Nonce     string
-	Timestamp int64
+	Random     []byte
+	Nonce      string
+	Timestamp  int64
 
 	// 回复的消息
-	ResponseMsg       utils.Reply
+	ResponseMsg utils.Reply
 }
 
 //NewServer init
@@ -50,7 +49,7 @@ func NewServer(request *http.Request, responce http.ResponseWriter,
 		Request:        request,
 		Responce:       responce,
 		MessageHandler: handle,
-		MpContext:      mpwcontext,
+		SContext:       mpwcontext,
 	}
 }
 
@@ -61,7 +60,7 @@ func (srv *Server) Ping() {
 		return
 	}
 
-	echostr:= srv.Request.URL.Query().Get("echostr")
+	echostr := srv.Request.URL.Query().Get("echostr")
 	if echostr == "" {
 		http.Error(srv.Responce, "", http.StatusForbidden)
 		return
@@ -81,10 +80,10 @@ func (srv *Server) Serve() error {
 		return err
 	}
 
-	if err = srv.buildResponse(&svrReq);err != nil{
+	if err = srv.buildResponse(&svrReq); err != nil {
 		return err
 	}
-	if err = srv.send(&svrReq);err != nil {
+	if err = srv.send(&svrReq); err != nil {
 		return err
 	}
 	return nil
@@ -115,13 +114,13 @@ func (srv *Server) validate(svrReq *ServerRequest) bool {
 		return false
 	}
 
-	if signature == utils.Signature(srv.MpContext.Config.Token, timestamp, nonce){
-		if svrReq != nil{
+	if signature == utils.Signature(srv.SContext.Config.Token, timestamp, nonce) {
+		if svrReq != nil {
 			svrReq.Timestamp = timestampInt
 			svrReq.Nonce = nonce
 		}
 		return true
-	}else{
+	} else {
 		return false
 	}
 }
@@ -149,7 +148,7 @@ func (srv *Server) handleRequest(svrReq *ServerRequest) (err error) {
 }
 
 //getMessage 解析微信返回的消息
-func (srv *Server) getMessage(svrReq *ServerRequest) (error) {
+func (srv *Server) getMessage(svrReq *ServerRequest) error {
 	var rawXMLMsgBytes []byte
 	var err error
 	if svrReq.IsSafeMode {
@@ -160,9 +159,9 @@ func (srv *Server) getMessage(svrReq *ServerRequest) (error) {
 		svrReq.RequestHttpBody = &encryptedXMLMsg
 
 		//解密
-		svrReq.Random, rawXMLMsgBytes, _, err = utils.DecryptMsg(srv.MpContext.Config.AppID,
+		svrReq.Random, rawXMLMsgBytes, _, err = utils.DecryptMsg(srv.SContext.Config.AppID,
 			encryptedXMLMsg.EncryptedMsg,
-			srv.MpContext.Config.EncodingAESKey)
+			srv.SContext.Config.EncodingAESKey)
 		if err != nil {
 			return fmt.Errorf("消息解密失败, err=%v", err)
 		}
@@ -173,9 +172,8 @@ func (srv *Server) getMessage(svrReq *ServerRequest) (error) {
 		}
 	}
 
-
 	var msg MixMessage
-	if err := xml.Unmarshal(rawXMLMsgBytes, &msg);err != nil{
+	if err := xml.Unmarshal(rawXMLMsgBytes, &msg); err != nil {
 		return err
 	}
 
@@ -217,29 +215,29 @@ func (srv *Server) buildResponse(svrReq *ServerRequest) (err error) {
 
 //Send 将自定义的消息发送
 func (srv *Server) send(svrReq *ServerRequest) (err error) {
-	if svrReq.ResponseMsg == nil{
+	if svrReq.ResponseMsg == nil {
 		return
 	}
 
 	var replyMsg interface{} = svrReq.ResponseMsg
 	if svrReq.IsSafeMode {
 		responseRawXMLMsg, err := xml.Marshal(svrReq.ResponseMsg)
-		if err != nil{
+		if err != nil {
 			return err
 		}
 
 		//安全模式下对消息进行加密
 		var encryptedMsg []byte
 		encryptedMsg, err = utils.EncryptMsg(svrReq.Random, responseRawXMLMsg,
-			srv.MpContext.Config.AppID,
-			srv.MpContext.Config.EncodingAESKey)
+			srv.SContext.Config.AppID,
+			srv.SContext.Config.EncodingAESKey)
 		if err != nil {
 			return err
 		}
 		// 如果获取不到timestamp nonce 则自己生成
 		timestamp := svrReq.Timestamp
 		timestampStr := strconv.FormatInt(timestamp, 10)
-		msgSignature := utils.Signature(srv.MpContext.Config.Token, timestampStr,
+		msgSignature := utils.Signature(srv.SContext.Config.Token, timestampStr,
 			svrReq.Nonce, string(encryptedMsg))
 		replyMsg = utils.ResponseEncryptedXMLMsg{
 			EncryptedMsg: string(encryptedMsg),

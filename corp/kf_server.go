@@ -1,11 +1,10 @@
 package corp
 
 import (
-	"encoding/json"
+	"log"
 	"encoding/xml"
 	"fmt"
 	"github.com/qjw/go-wx-sdk/utils"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -173,9 +172,6 @@ func (srv *KfServer) getMessage(svrReq *KfServerRequest) error {
 		return err
 	}
 	svrReq.MixedMsg = &mixedMsg
-
-	js, _ := json.MarshalIndent(mixedMsg, "", " ")
-	log.Print(string(js))
 
 	// 安全考虑再次验证
 	if svrReq.RequestHttpBody.ToUserName != mixedMsg.ToUserName {

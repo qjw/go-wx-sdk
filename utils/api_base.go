@@ -3,7 +3,6 @@ package utils
 import (
 	"reflect"
 	"fmt"
-	"log"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -66,9 +65,6 @@ func (this ApiBase) doProcessResponse(response []byte, code int,  err error, res
 	if err != nil {
 		return err
 	}
-
-	tmp := string(response)
-	log.Print(tmp)
 
 	if code == http.StatusNoContent && len(response) == 0{
 		response = []byte("{}")
